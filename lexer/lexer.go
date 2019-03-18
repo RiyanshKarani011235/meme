@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	"meme/token"
+	"github.com/riyanshkarani011235/meme/token"
 )
 
 type Lexer interface {
