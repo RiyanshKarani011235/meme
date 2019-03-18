@@ -1,0 +1,3 @@
+concept TypedMap extends Map<K, V> {
+	required elements [(K, V)]
+}

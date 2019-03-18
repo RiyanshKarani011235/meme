@@ -1,0 +1,1 @@
+concept Deadline extends Time {}

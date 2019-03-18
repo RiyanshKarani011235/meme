@@ -1,0 +1,3 @@
+concept List {
+	required elements [oneof(Concept, Relation)]
+}

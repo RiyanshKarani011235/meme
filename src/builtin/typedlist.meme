@@ -1,0 +1,12 @@
+concept TypedList<T> extends List {
+    required elements [T]
+}
+
+/*
+ * Example Usage
+ * concept Foo {
+ *     required integerList TypedList<int>
+ *     optional integerOrStringList TypedList<oneof(int, str)>
+ *     optional integerAndStringList TypedList<anyof(int, str)>
+ * }
+*/

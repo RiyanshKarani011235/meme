@@ -1,0 +1,4 @@
+concept Category {
+	required name string
+	required description Concept
+}

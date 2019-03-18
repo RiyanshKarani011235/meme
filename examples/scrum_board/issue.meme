@@ -1,0 +1,7 @@
+concept Issue {
+	required name string
+	required description Concept
+	required category Category
+	optional epic Epic
+	optional deadline Deadline
+}

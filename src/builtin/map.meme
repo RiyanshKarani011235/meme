@@ -1,0 +1,3 @@
+concept Map {
+	required elements TypedList<(oneof(Concept, Relation), oneof(Concept, Relation))>
+}
