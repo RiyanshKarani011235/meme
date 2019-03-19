@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/riyanshkarani011235/meme/lexer"
-	"github.com/riyanshkarani011235/meme/token"
 	"io"
+	"os"
 )
 
-const PROMPT = ">> "
+const PROMPT = "> "
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
@@ -22,5 +22,15 @@ func Start(in io.Reader, out io.Writer) {
 
 		line := scanner.Text()
 		l := lexer.NewLexer(line)
+		tokens := l.Tokenize()
+
+		for _, token := range tokens {
+			fmt.Printf("%v\n", token)
+		}
 	}
+}
+
+func main() {
+	fmt.Printf("The meme programming language v0.1\n")
+	Start(os.Stdin, os.Stdout)
 }

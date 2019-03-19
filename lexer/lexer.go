@@ -17,7 +17,7 @@ type Lexer struct {
 	tokens     chan token.Token // the channel at which tokens are emitted
 }
 
-func NewLexer(input string) (l *Lexer, c chan token.Token) {
+func NewLexer(input string) (l *Lexer) {
 	l = &Lexer{
 		input:      input,
 		lineNumber: 0,
@@ -25,15 +25,17 @@ func NewLexer(input string) (l *Lexer, c chan token.Token) {
 		currentPos: 0,
 		tokens:     make(chan token.Token),
 	}
+	return
+}
 
+func (l *Lexer) Tokenize() []token.Token {
 	go l.run()
+	tokens := make([]token.Token, 0)
+	for t := range l.tokens {
+		tokens = append(tokens, t)
+	}
 
-	go func() {
-		for message := range l.tokens {
-			fmt.Printf("%v\n", message)
-		}
-	}()
-	return l, l.tokens
+	return tokens
 }
 
 // run the lexer until nil state is reached
@@ -259,6 +261,7 @@ func tokenizeKeywordOrIdentifier(l *Lexer) stateFn {
 		"string":   token.TokenStringType,
 		"oneof":    token.TokenOneOf,
 		"anyof":    token.TokenAnyOf,
+		"extends":  token.TokenExtends,
 	}
 
 	c := l.next()

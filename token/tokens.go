@@ -15,6 +15,7 @@ const (
 	TokenRelation // relation
 	TokenRequired // required
 	TokenOptional // optional
+	TokenExtends  // extends
 
 	// identifier
 	TokenIdentifier
@@ -40,3 +41,32 @@ const (
 	// delimiters
 	TokenComma // ,
 )
+
+var tokenString = map[TokenType]string{
+	TokenError:            "ERROR",
+	TokenIllegal:          "ILLEGAL",
+	TokenEOF:              "EOF",
+	TokenConcept:          "CONCEPT",
+	TokenRelation:         "RELATION",
+	TokenRequired:         "REQUIRED",
+	TokenOptional:         "OPTIONAL",
+	TokenExtends:          "EXTENDS",
+	TokenIdentifier:       "IDENTIFIER",
+	TokenIntegerType:      "INTEGER",
+	TokenStringType:       "STRING",
+	TokenOneOf:            "ANYOF",
+	TokenAnyOf:            "ONEOF",
+	TokenLeftParen:        "LEFT_PAREN",
+	TokenRightParen:       "RIGHT_PAREN",
+	TokenLeftBrace:        "LEFT_BRACE",
+	TokenRightBrace:       "RIGHT_BRACE",
+	TokenLeftSquareBrace:  "LEFT_SQUARE_BRACE",
+	TokenRightSquareBrace: "RIGHT_SQUARE_BRACE",
+	TokenLeftAngleBrace:   "LEFT_ANGLE_BRACE",
+	TokenRightAngleBrace:  "RIGHT_ANGLE_BRACE",
+	TokenComma:            "COMMA",
+}
+
+func (tokenType TokenType) String() string {
+	return tokenString[tokenType]
+}
