@@ -1,32 +1,42 @@
 package token
 
-type TokenType string
+type TokenType int
 
 const (
+	TokenError TokenType = iota // error occurred
+	// value is the text of error
+
 	// special types
-	ILLEGAL = "ILLEGAL"
-	EOF     = "EOF"
+	TokenIllegal // illegal
+	TokenEOF     // end of file
 
 	// keywords
-	CONCEPT  = "concept"
-	RELATION = "relation"
-	REQUIRED = "required"
-	OPTIONAL = "optional"
+	TokenConcept  // concept
+	TokenRelation // relation
+	TokenRequired // required
+	TokenOptional // optional
+
+	// identifier
+	TokenIdentifier
+
+	// basic types / literals
+	TokenIntegerType // integer
+	TokenStringType  // string
 
 	// composite type constructors
-	ONEOF = "oneof"
-	ANYOF = "anyof"
+	TokenOneOf // oneof
+	TokenAnyOf // anyof
 
 	// parens and braces
-	L_BRACE        = "{"
-	R_BRACE        = "}"
-	L_PAREN        = "("
-	R_PAREN        = ")"
-	L_SQUARE_PAREN = "["
-	R_SQUARE_PAREN = "]"
-	L_ANGLE_PAREN  = "<"
-	R_ANGLE_BRACE  = ">"
+	TokenLeftParen        // (
+	TokenRightParen       // )
+	TokenLeftBrace        // {
+	TokenRightBrace       // }
+	TokenLeftSquareBrace  // [
+	TokenRightSquareBrace // ]
+	TokenLeftAngleBrace   // <
+	TokenRightAngleBrace  // >
 
 	// delimiters
-	COMMA = ","
+	TokenComma // ,
 )
