@@ -307,7 +307,7 @@ func tokenizeEndOfFile(l *Lexer) stateFn {
 	case eof:
 		l.emit(token.Token{
 			Type:       token.TokenEOF,
-			Literal:    string(c),
+			Literal:    "EOF",
 			LineNumber: l.lineNumber,
 			// @todo FileInfo
 			ColumnNumberStart: l.startPos,
@@ -345,50 +345,3 @@ func syntaxError(l *Lexer) stateFn {
 	})
 	return nil
 }
-
-/*
-func (l *Lexer) NextToken() token.Token {
-	var tok token.Token
-
-	switch l.ch {
-	case '{':
-		tok = newToken(token.TokenLeftBrace, l.ch)
-	case '}':
-		tok = newToken(token.TokenRightBrace, l.ch)
-	case '(':
-		tok = newToken(token.TokenLeftParen, l.ch)
-	case ')':
-		tok = newToken(token.TokenRightParen, l.ch)
-	case '[':
-		tok = newToken(token.TokenLeftSquareBrace, l.ch)
-	case ']':
-		tok = newToken(token.TokenRightSquareBrace, l.ch)
-	case '<':
-		tok = newToken(token.TokenLeftAngleBrace, l.ch)
-	case '>':
-		tok = newToken(token.TokenRightAngleBrace, l.ch)
-	}
-
-	// read the next character
-	l.readChar()
-
-	// return the read token
-	return tok
-}
-
-func (l *Lexer) readChar() {
-	if l.readPosition >= len(l.input) {
-		// ASCII code for NUL
-		l.ch = 0
-	} else {
-		l.ch = l.input[l.readPosition]
-	}
-
-	l.position = l.readPosition
-	l.readPosition += 1
-}
-
-func newToken(type_ token.TokenType, literal byte) token.Token {
-	return token.Token{Type: type_, Literal: string(literal)}
-}
-*/
