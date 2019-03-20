@@ -1,8 +1,8 @@
 build:
-	go build cmd/meme/meme.go
+	go build -o meme cmd/meme/main.go cmd/meme/root.go cmd/meme/build.go
 
 build-repl:
-	go build cmd/repl/repl.go
+	go build -o meme-repl cmd/repl/main.go
 	./repl
 
 test:
