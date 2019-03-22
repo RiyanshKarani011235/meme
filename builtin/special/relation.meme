@@ -1,4 +1,4 @@
-relation Relation {
+concept Relation {
 	required from oneof(Concept, Relation)
 	required to oneof(Concept, Relation)
 }
