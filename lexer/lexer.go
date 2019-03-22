@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"fmt"
+
 	"github.com/riyanshkarani011235/meme/token"
 )
 
@@ -9,12 +10,15 @@ const (
 	eof = '\r'
 )
 
+type stateFn func(*Lexer) stateFn
+
 type Lexer struct {
 	input      string
 	lineNumber int              // the line number in the input string the lexer is at
 	startPos   int              // starting position of this item
 	currentPos int              // current position in the input
 	tokens     chan token.Token // the channel at which tokens are emitted
+	state      stateFn
 }
 
 func NewLexer(input string) (l *Lexer) {
@@ -23,12 +27,18 @@ func NewLexer(input string) (l *Lexer) {
 		lineNumber: 0,
 		startPos:   0,
 		currentPos: 0,
-		tokens:     make(chan token.Token),
+		tokens:     make(chan token.Token, 1),
+		state:      startState,
 	}
 	return
 }
 
-func (l *Lexer) Tokenize() []token.Token {
+// Tokenizes the entire input and returns
+// a slice of token.Token instances. If using
+// the lexer in conjunction with a parser,
+// consider using the NextToken method to
+// tokenize and parse the input incrementally.
+func (l *Lexer) tokenize() []token.Token {
 	go l.run()
 	tokens := make([]token.Token, 0)
 	for t := range l.tokens {
@@ -40,11 +50,32 @@ func (l *Lexer) Tokenize() []token.Token {
 
 // run the lexer until nil state is reached
 func (l *Lexer) run() {
-	for state := startState; state != nil; {
-		state = state(l)
+	for l.state != nil {
+		l.state = l.state(l)
 	}
 
 	close(l.tokens)
+}
+
+// reads the input and returns the next token.
+// ok is true if the lexer has more tokens to emit.
+// ok is false if the lexer has no more tokens to emit.
+func (l *Lexer) NextToken() (t token.Token, ok bool) {
+	if l.state == nil {
+		return token.Token{}, false
+	}
+
+	// generate the next state while at least
+	// one token is emitted, then stop. This should
+	// always work because if the previous state is
+	// not nil and the current state becomes nil,
+	// either an EOF token or a SynatxError token is
+	// emitted.
+	for len(l.tokens) == 0 {
+		l.state = l.state(l)
+	}
+
+	return <-l.tokens, true
 }
 
 // emits a token to the tokens channel of the lexer
@@ -113,7 +144,6 @@ func isWhiteSpace(character byte) bool {
 // ---------------
 // State functions
 // ---------------
-type stateFn func(*Lexer) stateFn
 
 func startState(l *Lexer) stateFn {
 	l.startPos = 0
@@ -259,6 +289,7 @@ func tokenizeKeywordOrIdentifier(l *Lexer) stateFn {
 		"optional": token.TokenOptional,
 		"integer":  token.TokenIntegerType,
 		"string":   token.TokenStringType,
+		"boolean":  token.TokenBooleanType,
 		"oneof":    token.TokenOneOf,
 		"anyof":    token.TokenAnyOf,
 		"extends":  token.TokenExtends,
