@@ -1,0 +1,4 @@
+concept TodoListItem {
+	required description Concept
+	required isDone boolean
+}
