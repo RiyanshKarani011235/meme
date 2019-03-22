@@ -23,6 +23,7 @@ const (
 	// basic types / literals
 	TokenIntegerType // integer
 	TokenStringType  // string
+	TokenBooleanType // boolean
 
 	// composite type constructors
 	TokenOneOf // oneof
@@ -54,6 +55,7 @@ var tokenString = map[TokenType]string{
 	TokenIdentifier:       "IDENTIFIER",
 	TokenIntegerType:      "INTEGER",
 	TokenStringType:       "STRING",
+	TokenBooleanType:      "BOOLEAN",
 	TokenOneOf:            "ONEOF",
 	TokenAnyOf:            "ANYOF",
 	TokenLeftParen:        "LEFT_PAREN",
@@ -68,5 +70,10 @@ var tokenString = map[TokenType]string{
 }
 
 func (tokenType TokenType) String() string {
-	return tokenString[tokenType]
+	t, ok := tokenString[tokenType]
+	if !ok {
+		panic("undefined tokenType")
+	}
+
+	return t
 }
