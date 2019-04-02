@@ -16,4 +16,7 @@
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
-*.out<Paste>
+*.out
+
+# built binaries
+meme-repl

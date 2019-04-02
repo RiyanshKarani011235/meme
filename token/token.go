@@ -23,8 +23,8 @@ func (token Token) String() string {
 	switch token.Type {
 	case TokenError:
 		return token.Literal
-	case TokenIdentifier:
-		// Identifier, print at most 10 characters
+	case TokenIdentifier, TokenSingleLineComment, TokenMultiLineComment:
+		// Identifiers / comments, print at most 10 characters
 		if len(token.Literal) > 10 {
 			return fmt.Sprintf("%v(%.10v...)", token.Type, token.Literal)
 		} else {

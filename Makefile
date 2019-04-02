@@ -3,7 +3,7 @@ build:
 
 build-repl:
 	go build -o meme-repl cmd/repl/main.go
-	./repl
+	./meme-repl
 
 test:
 	ginkgo ./...

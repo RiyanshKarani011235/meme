@@ -38,6 +38,8 @@ func NewLexer(input string) (l *Lexer) {
 // the lexer in conjunction with a parser,
 // consider using the NextToken method to
 // tokenize and parse the input incrementally.
+// That, lexing can be done lazily and stopped
+// prematurely in case of a Parsing/Lexing error.
 func (l *Lexer) tokenize() []token.Token {
 	go l.run()
 	tokens := make([]token.Token, 0)
@@ -94,6 +96,14 @@ func (l *Lexer) next() (character byte) {
 
 	character = l.input[l.currentPos]
 	l.currentPos += 1
+	return
+}
+
+// peeks the next character without incrementing
+// currentPos
+func (l *Lexer) peek() (character byte) {
+	character = l.next()
+	l.backup()
 	return
 }
 
@@ -189,112 +199,109 @@ func tokenizeText(l *Lexer) stateFn {
 	// parens or braces
 	case '{', '}', '(', ')', '[', ']', '<', '>':
 		l.backup()
-		return tokenizeParensAndBraces
+		return tokenizeSpecialCharacters
 
 	// end of file
 	case eof:
 		l.backup()
 		return tokenizeEndOfFile
 
-	// comma
+	// delimiters
 	case ',':
 		l.backup()
-		return tokenizeDelimiter
+		return tokenizeSpecialCharacters
+
+	// comments
+	case '/':
+		nextCharacter := l.next()
+
+		// do not backup here, because the comment content
+		// starts after "//" or "/*"
+
+		if nextCharacter == '/' {
+			return tokenizeSingleLineComment
+		} else if nextCharacter == '*' {
+			return tokenizeMultiLineComment
+		} else {
+			return syntaxError
+		}
 
 	// anything else, must be a syntax error
 	default:
 		return syntaxError
-
 	}
-
 }
 
-func tokenizeDelimiter(l *Lexer) stateFn {
-	c := l.next()
-	delimiterTokenTypeMap := map[string]token.TokenType{
-		",": token.TokenComma,
-	}
-
-	// valid delimiter, emit token
-	if tokenType, ok := delimiterTokenTypeMap[string(c)]; ok {
+func tokenizeSingleLineComment(l *Lexer) stateFn {
+	switch l.next() {
+	case '\n', eof:
+		// end of comment
+		l.backup()
 		l.emit(token.Token{
-			Type:       tokenType,
-			Literal:    string(c),
+			Type:       token.TokenSingleLineComment,
+			Literal:    l.input[l.startPos:l.currentPos],
 			LineNumber: l.lineNumber,
 			// @todo FileInfo
 			ColumnNumberStart: l.startPos,
 			ColumnNumberEnd:   l.currentPos,
 		})
-
 		return tokenizeText
-
+	default:
+		// continue reading comment
+		return tokenizeSingleLineComment
 	}
-
-	// invalid delimiter, syntax error
-	return syntaxError
 }
 
-func tokenizeParensAndBraces(l *Lexer) stateFn {
-	c := l.next()
+func tokenizeMultiLineComment(l *Lexer) stateFn {
+	switch l.next() {
+	case '*':
+		if l.peek() == '/' {
+			// end of comment
+			l.next()
+			l.emit(token.Token{
+				Type:       token.TokenMultiLineComment,
+				Literal:    l.input[l.startPos:l.currentPos],
+				LineNumber: l.lineNumber,
+				// @todo FileInfo
+				ColumnNumberStart: l.startPos,
+				ColumnNumberEnd:   l.currentPos,
+			})
+			fmt.Println("returning to tokenizeText")
+			return tokenizeText
+		} else {
+			// continue reading comment
+			return tokenizeMultiLineComment
+		}
+	case eof:
+		// premature end of file, before end of multi line comment
+		return syntaxError
+	default:
+		// continue reading the comment
+		return tokenizeMultiLineComment
+	}
 
-	t := token.Token{
+}
+
+func tokenizeSpecialCharacters(l *Lexer) stateFn {
+	c := l.next()
+	tokenType, ok := token.TokenTypeLookupMap[string(c)]
+	if !ok {
+		panic(fmt.Sprintf("unrecognized special character %v", c))
+	}
+
+	l.emit(token.Token{
+		Type:       tokenType,
 		Literal:    string(c),
 		LineNumber: l.lineNumber,
 		// @todo FileInfo
 		ColumnNumberStart: l.currentPos,
 		ColumnNumberEnd:   l.currentPos,
-	}
+	})
 
-	switch c {
-	case '{':
-		t.Type = token.TokenLeftBrace
-		break
-	case '}':
-		t.Type = token.TokenRightBrace
-		break
-	case '(':
-		t.Type = token.TokenLeftParen
-		break
-	case ')':
-		t.Type = token.TokenRightParen
-		break
-	case '[':
-		t.Type = token.TokenLeftSquareBrace
-		break
-	case ']':
-		t.Type = token.TokenRightSquareBrace
-		break
-	case '<':
-		t.Type = token.TokenLeftAngleBrace
-		break
-	case '>':
-		t.Type = token.TokenRightAngleBrace
-		break
-	default:
-		panic(fmt.Sprintf("invalid paren/brace character %v", c))
-	}
-
-	// emit the token
-	l.emit(t)
-
-	// start reading text again
 	return tokenizeText
 }
 
 func tokenizeKeywordOrIdentifier(l *Lexer) stateFn {
-	keywordsTokenTypeMap := map[string]token.TokenType{
-		"concept":  token.TokenConcept,
-		"relation": token.TokenRelation,
-		"required": token.TokenRequired,
-		"optional": token.TokenOptional,
-		"integer":  token.TokenIntegerType,
-		"string":   token.TokenStringType,
-		"boolean":  token.TokenBooleanType,
-		"oneof":    token.TokenOneOf,
-		"anyof":    token.TokenAnyOf,
-		"extends":  token.TokenExtends,
-	}
-
 	c := l.next()
 
 	// alphanumeric or underscore
@@ -306,28 +313,24 @@ func tokenizeKeywordOrIdentifier(l *Lexer) stateFn {
 	l.backup()
 	literal := l.input[l.startPos:l.currentPos]
 
-	if tokenType, ok := keywordsTokenTypeMap[literal]; ok {
-		// keyword
-		l.emit(token.Token{
-			Type:       tokenType,
-			Literal:    literal,
-			LineNumber: l.lineNumber,
-			// @todo FileInfo
-			ColumnNumberStart: l.startPos,
-			ColumnNumberEnd:   l.currentPos,
-		})
-	} else {
-		// identifier
-		l.emit(token.Token{
-			Type:       token.TokenIdentifier,
-			Literal:    literal,
-			LineNumber: l.lineNumber,
-			// @todo FileInfo
-			ColumnNumberStart: l.startPos,
-			ColumnNumberEnd:   l.currentPos,
-		})
+	// we now have a literal, build a token out of it
+	t := token.Token{
+		Literal:    literal,
+		LineNumber: l.lineNumber,
+		// @todo FileInfo
+		ColumnNumberStart: l.startPos,
+		ColumnNumberEnd:   l.currentPos,
 	}
 
+	if tokenType, ok := token.TokenTypeLookupMap[literal]; ok {
+		// is a keyword
+		t.Type = tokenType
+	} else {
+		// is an identifier
+		t.Type = token.TokenIdentifier
+	}
+
+	l.emit(t)
 	return tokenizeText
 }
 

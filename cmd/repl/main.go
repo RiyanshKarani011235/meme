@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/riyanshkarani011235/meme/lexer"
+	"github.com/riyanshkarani011235/meme/token"
 	"io"
 	"os"
 )
@@ -22,7 +23,16 @@ func Start(in io.Reader, out io.Writer) {
 
 		line := scanner.Text()
 		l := lexer.NewLexer(line)
-		tokens := l.Tokenize()
+		tokens := make([]token.Token, 0)
+
+		for {
+			t, ok := l.NextToken()
+			if !ok {
+				break
+			}
+
+			tokens = append(tokens, t)
+		}
 
 		for _, token := range tokens {
 			fmt.Printf("%v\n", token)
